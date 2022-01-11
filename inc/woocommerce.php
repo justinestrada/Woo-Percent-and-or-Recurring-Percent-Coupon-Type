@@ -1,4 +1,75 @@
 <?php
+function wporg_apply_custom_code($post) {
+  ?>
+  <button id="apply_new_custom_coupon" type="button" class="button">Apply New Coupon</button>
+  <script>
+    let apply_new_custom_coupon = jQuery('#apply_new_custom_coupon');
+    apply_new_custom_coupon.on('click', function(){
+      let coupon = prompt("Please enter coupon code");
+      if (!coupon) return;
+      apply_new_custom_coupon.html('Applying');
+      jQuery.post("<?php echo admin_url( 'admin-ajax.php' ); ?>", {coupon: coupon, action: 'new_custom_coupon', order_id:"<?php echo $post->ID; ?>" }, function(response){
+        response = JSON.parse(response);
+        apply_new_custom_coupon.html('Apply New Coupon');
+        if(response.success) {
+          alert('Coupon applied please refresh to see the change');
+          return;
+        }
+        alert('Error: '+response.message)
+
+      });
+    });
+  </script>
+  <?php
+}
+function wporg_add_custom_box() {
+    add_meta_box(
+        'wporg_apply_custom_code',
+        'Apply Custom Coupon',
+        'wporg_apply_custom_code',
+        'shop_subscription'
+    );
+}
+add_action( 'add_meta_boxes', 'wporg_add_custom_box' );
+
+
+function wp_ajax_new_custom_coupon() {
+  global $woocommerce;
+  $res = ['success'=>true];
+  $order = new WC_Order( $_POST['order_id'] );
+  $coupon = new WC_Coupon($_POST['coupon']);
+  if(!$coupon->id){
+    $res['success'] = false;
+    $res['message'] = 'Coupon code is not found.';
+    echo json_encode($res);
+    wp_die();
+  }
+
+  if (!$coupon->is_type('percent_andor_recurring_percent')){
+    $res['success'] = false;
+    $res['message'] = 'Coupon code only compatible with Percent And Or Recurring Percent.';
+    echo json_encode($res);
+    wp_die();
+  }
+  $discount_total = $coupon->get_amount();
+
+  foreach($order->get_items() as $order_item){
+    $product_id = $order_item->get_product_id();
+    $total = $order_item->get_total();
+    $order_item->set_subtotal($total);
+    $discount = (( $total / 100) * $discount_total );
+    $order_item->set_total($total - $discount);
+    $order_item->save();
+  }
+  $item = new WC_Order_Item_Coupon();
+  $item->set_props(array('code' => $_POST['coupon'], 'discount' => $discount_total, 'discount_tax' => 0));
+  $order->add_item($item);
+  $order->calculate_totals();
+  $order->save();
+  echo json_encode($res);
+  wp_die();
+}
+add_action("wp_ajax_new_custom_coupon", "wp_ajax_new_custom_coupon");
 
 /*
  * New Custom Coupon Type
@@ -74,7 +145,7 @@ add_filter('woocommerce_coupon_get_discount_amount', function ($discount, $disco
     // IF TYPE MATCHES PERFORM CUSTOM CALCULATION
     if ($coupon->is_type('percent_andor_recurring_percent')){
       $price = ((int)$cart_item['line_subtotal']);
-      $discount = $price * (($coupon->get_amount()/((int)$cart_item['quantity']))/100); 
+      $discount = $price * (($coupon->get_amount()/((int)$cart_item['quantity']))/100);
     }
     return $discount;
 }, 10, 5);
@@ -84,7 +155,7 @@ add_filter('woocommerce_coupon_get_discount_amount', function ($discount, $disco
  */
 add_action( 'woocommerce_before_calculate_totals', function ( $cart ) {
     if (!class_exists('WC_Subscriptions_Cart')) {
-        return;
+      return;
     }
     remove_action( 'woocommerce_before_calculate_totals', 'WC_Subscriptions_Coupon::remove_coupons', 10 );
     $calculation_type = WC_Subscriptions_Cart::get_calculation_type();
