@@ -1,6 +1,11 @@
 <?php
 function wporg_apply_custom_code($post) {
   ?>
+  <style>
+  .post-type-shop_subscription .button.add-coupon {
+    display: none;
+  }    
+  </style>
   <button id="apply_new_custom_coupon" type="button" class="button">Apply New Coupon</button>
   <script>
     let apply_new_custom_coupon = jQuery('#apply_new_custom_coupon');
