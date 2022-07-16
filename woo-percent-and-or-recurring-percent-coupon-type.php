@@ -8,7 +8,7 @@
  * @wordpress-plugin
  * Plugin Name:       Woo Percent and or Recurring Percent Coupon Type
  * Plugin URI:        https://estradaenterprises.biz/
- * Description:       WordPress Plugin
+ * Description:       Simple plugin for a custom WooCommerce coupon type
  * Version:           0.0.1
  * Author:            Estrada Enterprises
  * Author URI:        https://estradaenterprises.biz/
