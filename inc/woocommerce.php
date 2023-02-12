@@ -100,11 +100,11 @@ add_filter('woocommerce_coupon_is_valid_for_product', function ($valid, $product
         return $valid;
     }
 
-    $product_cats = wp_get_post_terms( $product->id, 'product_cat', array( "fields" => "ids" ) );
+    $product_cats = wp_get_post_terms( $product->get_id(), 'product_cat', array( "fields" => "ids" ) );
     
     // SPECIFIC PRODUCTS ARE DISCOUNTED
     if ( sizeof( $coupon->get_product_ids() ) > 0 ) {
-        if ( in_array( $product->id, $coupon->get_product_ids() ) || ( isset( $product->variation_id ) && in_array( $product->variation_id, $coupon->get_product_ids() ) ) || in_array( $product->get_parent(), $coupon->get_product_ids() ) ) {
+        if ( in_array( $product->get_id(), $coupon->get_product_ids() ) || ( isset( $product->variation_id ) && in_array( $product->variation_id, $coupon->get_product_ids() ) ) || in_array( $product->get_parent(), $coupon->get_product_ids() ) ) {
             $valid = true;
         }
     }
@@ -143,7 +143,7 @@ add_filter('woocommerce_coupon_is_valid_for_product', function ($valid, $product
             if ( in_array( $product->variation_id, $product_ids_on_sale, true ) ) {
                 $valid = false;
             }
-        } elseif ( in_array( $product->id, $product_ids_on_sale, true ) ) {
+        } elseif ( in_array( $product->get_id(), $product_ids_on_sale, true ) ) {
             $valid = false;
         }
     }
