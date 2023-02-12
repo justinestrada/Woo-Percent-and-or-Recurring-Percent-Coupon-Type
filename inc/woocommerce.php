@@ -84,6 +84,14 @@ add_filter( 'woocommerce_coupon_discount_types', function ( $discount_types ) {
     return $discount_types;
 }, 10, 1);
 
+add_filter('woocommerce_subscriptions_validate_coupon_type', function($bool, $coupon, $valid) {
+  if ( $coupon->is_type( array('percent_andor_recurring_percent') ) ) {
+    $valid = true;
+    $bool = false;
+  }
+  return $bool;
+}, 10, 3);
+
 /*
  * Validate Coupon Type
  */
@@ -92,53 +100,53 @@ add_filter('woocommerce_coupon_is_valid_for_product', function ($valid, $product
         return $valid;
     }
 
-    // $product_cats = wp_get_post_terms( $product->id, 'product_cat', array( "fields" => "ids" ) );
+    $product_cats = wp_get_post_terms( $product->id, 'product_cat', array( "fields" => "ids" ) );
     
     // SPECIFIC PRODUCTS ARE DISCOUNTED
-    // if ( sizeof( $coupon->product_ids ) > 0 ) {
-    //     if ( in_array( $product->id, $coupon->product_ids ) || ( isset( $product->variation_id ) && in_array( $product->variation_id, $coupon->product_ids ) ) || in_array( $product->get_parent(), $coupon->product_ids ) ) {
-    //         $valid = true;
-    //     }
-    // }
+    if ( sizeof( $coupon->get_product_ids ) > 0 ) {
+        if ( in_array( $product->id, $coupon->product_ids ) || ( isset( $product->variation_id ) && in_array( $product->variation_id, $coupon->product_ids ) ) || in_array( $product->get_parent(), $coupon->product_ids ) ) {
+            $valid = true;
+        }
+    }
 
     // CATEGORY DISCOUNTS
-    // if ( sizeof( $coupon->product_categories ) > 0 ) {
-    //     if ( sizeof( array_intersect( $product_cats, $coupon->product_categories ) ) > 0 ) {
-    //         $valid = true;
-    //     }
-    // }
+    if ( sizeof( $coupon->product_categories ) > 0 ) {
+        if ( sizeof( array_intersect( $product_cats, $coupon->product_categories ) ) > 0 ) {
+            $valid = true;
+        }
+    }
 
     // IF ALL ITEMS ARE DISCOUNTED
-    // if ( ! sizeof( $coupon->product_ids ) && ! sizeof( $coupon->product_categories ) ) {            
-    //     $valid = true;
-    // }
+    if ( ! sizeof( $coupon->product_ids ) && ! sizeof( $coupon->product_categories ) ) {            
+        $valid = true;
+    }
     
     // SPECIFIC PRODUCT IDs EXLCUDED FROM DISCOUNT
-    // if ( sizeof( $coupon->exclude_product_ids ) > 0 ) {
-    //     if ( in_array( $product->id, $coupon->exclude_product_ids ) || ( isset( $product->variation_id ) && in_array( $product->variation_id, $coupon->exclude_product_ids ) ) || in_array( $product->get_parent(), $coupon->exclude_product_ids ) ) {
-    //         $valid = false;
-    //     }
-    // }
+    if ( sizeof( $coupon->exclude_product_ids ) > 0 ) {
+        if ( in_array( $product->id, $coupon->exclude_product_ids ) || ( isset( $product->variation_id ) && in_array( $product->variation_id, $coupon->exclude_product_ids ) ) || in_array( $product->get_parent(), $coupon->exclude_product_ids ) ) {
+            $valid = false;
+        }
+    }
     
     // SPECIFIC CATEGORIES EXLCUDED FROM THE DISCOUNT
-    // if ( sizeof( $coupon->exclude_product_categories ) > 0 ) {
-    //     if ( sizeof( array_intersect( $product_cats, $coupon->exclude_product_categories ) ) > 0 ) {
-    //         $valid = false;
-    //     }
-    // }
+    if ( sizeof( $coupon->exclude_product_categories ) > 0 ) {
+        if ( sizeof( array_intersect( $product_cats, $coupon->exclude_product_categories ) ) > 0 ) {
+            $valid = false;
+        }
+    }
 
     // SALE ITEMS EXCLUDED FROM DISCOUNT
-    // if ( $coupon->exclude_sale_items == 'yes' ) {
-    //     $product_ids_on_sale = wc_get_product_ids_on_sale();
+    if ( $coupon->exclude_sale_items == 'yes' ) {
+        $product_ids_on_sale = wc_get_product_ids_on_sale();
 
-    //     if ( isset( $product->variation_id ) ) {
-    //         if ( in_array( $product->variation_id, $product_ids_on_sale, true ) ) {
-    //             $valid = false;
-    //         }
-    //     } elseif ( in_array( $product->id, $product_ids_on_sale, true ) ) {
-    //         $valid = false;
-    //     }
-    // }
+        if ( isset( $product->variation_id ) ) {
+            if ( in_array( $product->variation_id, $product_ids_on_sale, true ) ) {
+                $valid = false;
+            }
+        } elseif ( in_array( $product->id, $product_ids_on_sale, true ) ) {
+            $valid = false;
+        }
+    }
 
     return true;
 }, 10, 4);
