@@ -43,7 +43,7 @@ function wp_ajax_new_custom_coupon() {
   $res = ['success'=>true];
   $order = new WC_Order( $_POST['order_id'] );
   $coupon = new WC_Coupon($_POST['coupon']);
-  if(!$coupon->id){
+  if(!$coupon->get_id()){
     $res['success'] = false;
     $res['message'] = 'Coupon code is not found.';
     echo json_encode($res);
@@ -103,40 +103,40 @@ add_filter('woocommerce_coupon_is_valid_for_product', function ($valid, $product
     $product_cats = wp_get_post_terms( $product->id, 'product_cat', array( "fields" => "ids" ) );
     
     // SPECIFIC PRODUCTS ARE DISCOUNTED
-    if ( sizeof( $coupon->get_product_ids ) > 0 ) {
-        if ( in_array( $product->id, $coupon->product_ids ) || ( isset( $product->variation_id ) && in_array( $product->variation_id, $coupon->product_ids ) ) || in_array( $product->get_parent(), $coupon->product_ids ) ) {
+    if ( sizeof( $coupon->get_product_ids() ) > 0 ) {
+        if ( in_array( $product->id, $coupon->get_product_ids() ) || ( isset( $product->variation_id ) && in_array( $product->variation_id, $coupon->get_product_ids() ) ) || in_array( $product->get_parent(), $coupon->get_product_ids() ) ) {
             $valid = true;
         }
     }
 
     // CATEGORY DISCOUNTS
-    if ( sizeof( $coupon->product_categories ) > 0 ) {
-        if ( sizeof( array_intersect( $product_cats, $coupon->product_categories ) ) > 0 ) {
+    if ( sizeof( $coupon->get_product_categories() ) > 0 ) {
+        if ( sizeof( array_intersect( $product_cats, $coupon->get_product_categories() ) ) > 0 ) {
             $valid = true;
         }
     }
 
     // IF ALL ITEMS ARE DISCOUNTED
-    if ( ! sizeof( $coupon->product_ids ) && ! sizeof( $coupon->product_categories ) ) {            
+    if ( ! sizeof( $coupon->get_product_ids() ) && ! sizeof( $coupon->get_product_categories() ) ) {            
         $valid = true;
     }
     
     // SPECIFIC PRODUCT IDs EXLCUDED FROM DISCOUNT
-    if ( sizeof( $coupon->exclude_product_ids ) > 0 ) {
-        if ( in_array( $product->id, $coupon->exclude_product_ids ) || ( isset( $product->variation_id ) && in_array( $product->variation_id, $coupon->exclude_product_ids ) ) || in_array( $product->get_parent(), $coupon->exclude_product_ids ) ) {
+    if ( sizeof( $coupon->get_excluded_product_ids() ) > 0 ) {
+        if ( in_array( $product->id, $coupon->get_excluded_product_ids() ) || ( isset( $product->variation_id ) && in_array( $product->variation_id, $coupon->get_excluded_product_ids() ) ) || in_array( $product->get_parent(), $coupon->get_excluded_product_ids() ) ) {
             $valid = false;
         }
     }
     
     // SPECIFIC CATEGORIES EXLCUDED FROM THE DISCOUNT
-    if ( sizeof( $coupon->exclude_product_categories ) > 0 ) {
-        if ( sizeof( array_intersect( $product_cats, $coupon->exclude_product_categories ) ) > 0 ) {
+    if ( sizeof( $coupon->get_excluded_product_categories() ) > 0 ) {
+        if ( sizeof( array_intersect( $product_cats, $coupon->get_excluded_product_categories() ) ) > 0 ) {
             $valid = false;
         }
     }
 
     // SALE ITEMS EXCLUDED FROM DISCOUNT
-    if ( $coupon->exclude_sale_items == 'yes' ) {
+    if ( $coupon->get_exclude_sale_items() == 'yes' ) {
         $product_ids_on_sale = wc_get_product_ids_on_sale();
 
         if ( isset( $product->variation_id ) ) {
